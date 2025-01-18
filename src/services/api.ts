@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 
-const BASE_URL = "https://api.link-shortener.com";
+const BASE_URL = "http://localhost:8090";
 
 interface ShortenURLRequest {
   originalUrl: string;

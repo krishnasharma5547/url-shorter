@@ -3,6 +3,8 @@ import Button from "../components/Button";
 import URLShortenerForm from "../components/URLShortenerForm";
 import QRGeneratorForm from "../components/QRGeneratorForm";
 import api from "../services/api";
+import LinkIcon from "../assets/LinkIcon";
+import QRIcon from "../assets/QRIcon";
 
 interface ShortenedURL {
   shortUrl: string;
@@ -83,7 +85,9 @@ const Home: React.FC = () => {
 
       setQRCode(response);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate QR code");
+      setError(
+        err instanceof Error ? err.message : "Failed to generate QR code"
+      );
       setQRCode(null);
     } finally {
       setLoading((prev) => ({ ...prev, generating: false }));
@@ -98,7 +102,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-page">
       {/* Hero Section */}
-      <div className="bg-gradient-hero py-12 md:py-20">
+      <div className="py-12 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-gradient-text bg-clip-text mb-6">
@@ -113,14 +117,20 @@ const Home: React.FC = () => {
                 onClick={() => scrollToSection("url-shortener")}
                 className="bg-gradient-primary hover:opacity-90 transform hover:scale-105 transition-all duration-300"
               >
-                Shorten URL
+                <span className="flex items-center">
+                  <LinkIcon className="w-6 h-6 mr-2" color="#ffffff" /> Shorten
+                  URL
+                </span>
               </Button>
               <Button
                 variant="secondary"
                 onClick={() => scrollToSection("qr-generator")}
                 className="bg-gradient-secondary text-white hover:opacity-90 transform hover:scale-105 transition-all duration-300"
               >
-                Generate QR
+                <span className="flex items-center">
+                  <QRIcon className="w-6 h-6 mr-2" color="#ffffff" /> Generate
+                  QR
+                </span>
               </Button>
             </div>
           </div>
@@ -137,10 +147,7 @@ const Home: React.FC = () => {
       )}
 
       {/* URL Shortener Section */}
-      <div
-        id="url-shortener"
-        className="py-16 backdrop-blur-sm bg-white/50"
-      >
+      <div id="url-shortener" className="py-16 backdrop-blur-sm bg-white/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <URLShortenerForm
             onSubmit={handleURLShorten}
@@ -151,10 +158,7 @@ const Home: React.FC = () => {
       </div>
 
       {/* QR Generator Section */}
-      <div
-        id="qr-generator"
-        className="py-16 backdrop-blur-sm bg-white/50"
-      >
+      <div id="qr-generator" className="py-16 backdrop-blur-sm bg-white/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <QRGeneratorForm
             onSubmit={handleQRGenerate}

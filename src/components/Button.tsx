@@ -18,11 +18,13 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
 }) => {
   const baseStyles =
-    "px-6 py-3 rounded-md font-medium transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-md";
+    "px-6 py-3 rounded-md font-medium transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-md disabled:hover:translate-y-0";
 
   const variantStyles = {
-    primary: "bg-gradient-primary text-white hover:opacity-90 hover:shadow-primary/50",
-    secondary: "bg-gradient-secondary text-white hover:opacity-90 hover:shadow-secondary/50",
+    primary:
+      "bg-gradient-primary text-white hover:opacity-90 hover:shadow-primary/50 disabled:hover:opacity-50",
+    secondary:
+      "bg-gradient-secondary text-white hover:opacity-90 hover:shadow-secondary/50 disabled:hover:opacity-50",
   };
 
   return (

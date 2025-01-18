@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
 import Button from "./Button";
-import api from "../services/api";
 
 interface URLShortenerFormProps {
   onSubmit: (data: {
@@ -16,126 +17,148 @@ interface URLShortenerFormProps {
   } | null;
 }
 
-const URLShortenerForm: React.FC<URLShortenerFormProps> = ({ onSubmit, loading, result }) => {
-  const [formData, setFormData] = useState({
-    url: "",
-    customAlias: "",
-    expiryDate: "",
-  });
-  const [error, setError] = useState<string | null>(null);
+const validationSchema = Yup.object({
+  url: Yup.string().url("Please enter a valid URL").required("URL is required"),
+  customAlias: Yup.string()
+    .min(3, "Alias must be at least 3 characters")
+    .matches(
+      /^[a-zA-Z0-9-_]+$/,
+      "Only letters, numbers, hyphen and underscore allowed"
+    )
+    .optional(),
+  expiryDate: Yup.date()
+    .min(new Date(), "Expiry date must be in the future")
+    .optional(),
+});
 
-  const handleSubmit = async () => {
-    if (formData.url.trim()) {
-      try {
-        setError(null);
-
-        const response = await api.shortenURL({
-          originalUrl: formData.url,
-          customAlias: formData.customAlias || undefined,
-          expireAfterDays: formData.expiryDate
-            ? calculateDays(formData.expiryDate)
-            : undefined,
-        });
-
-        onSubmit(formData);
-        setFormData({ url: "", customAlias: "", expiryDate: "" });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to shorten URL");
-      }
-    }
-  };
-
-  const calculateDays = (expiryDate: string): number => {
-    const diff = new Date(expiryDate).getTime() - new Date().getTime();
-    return Math.ceil(diff / (1000 * 3600 * 24));
-  };
-
+const URLShortenerForm: React.FC<URLShortenerFormProps> = ({
+  onSubmit,
+  loading,
+  result,
+}) => {
   return (
     <div className="max-w-3xl mx-auto">
       <h2 className="text-3xl font-bold text-center mb-8 text-transparent bg-gradient-text bg-clip-text">
         Shorten Your URL
       </h2>
       <div className="bg-white/80 backdrop-blur-sm p-6 rounded-lg shadow-xl space-y-4 border border-gray-100">
-        <div className="space-y-2">
-          <label
-            htmlFor="url"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Long URL
-          </label>
-          <input
-            id="url"
-            type="url"
-            placeholder="Paste your long URL here..."
-            className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.url}
-            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label
-            htmlFor="alias"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Custom Alias (Optional)
-          </label>
-          <input
-            id="alias"
-            type="text"
-            placeholder="Enter custom alias"
-            className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.customAlias}
-            onChange={(e) =>
-              setFormData({ ...formData, customAlias: e.target.value })
+        <Formik
+          initialValues={{
+            url: "",
+            customAlias: "",
+            expiryDate: "",
+          }}
+          validationSchema={validationSchema}
+          onSubmit={(values, { resetForm }) => {
+            onSubmit(values);
+            if (!loading) {
+              resetForm();
             }
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label
-            htmlFor="expiry"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Expiry Date (Optional)
-          </label>
-          <input
-            id="expiry"
-            type="date"
-            className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={formData.expiryDate}
-            onChange={(e) =>
-              setFormData({ ...formData, expiryDate: e.target.value })
-            }
-          />
-        </div>
-
-        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-
-        {result && (
-          <div className="mt-4 p-4 bg-green-50 rounded-md">
-            <p className="text-green-700 font-medium">
-              URL Shortened Successfully!
-            </p>
-            <a
-              href={result.shortUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline break-all"
-            >
-              {result.shortUrl}
-            </a>
-          </div>
-        )}
-
-        <Button
-          variant="primary"
-          className="w-full mt-4"
-          onClick={handleSubmit}
-          disabled={loading}
+          }}
         >
-          {loading ? "Shortening..." : "Shorten It!"}
-        </Button>
+          {({ errors, touched, isValid, dirty }) => (
+            <Form className="space-y-4">
+              <div className="space-y-2">
+                <label
+                  htmlFor="url"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Long URL
+                </label>
+                <Field
+                  id="url"
+                  name="url"
+                  type="url"
+                  placeholder="Paste your long URL here..."
+                  className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.url && touched.url
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                <ErrorMessage
+                  name="url"
+                  component="div"
+                  className="text-red-500 text-sm mt-1"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="customAlias"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Custom Alias (Optional)
+                </label>
+                <Field
+                  id="customAlias"
+                  name="customAlias"
+                  type="text"
+                  placeholder="Enter custom alias"
+                  className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.customAlias && touched.customAlias
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                <ErrorMessage
+                  name="customAlias"
+                  component="div"
+                  className="text-red-500 text-sm mt-1"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="expiryDate"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Expiry Date (Optional)
+                </label>
+                <Field
+                  id="expiryDate"
+                  name="expiryDate"
+                  type="date"
+                  className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.expiryDate && touched.expiryDate
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                />
+                <ErrorMessage
+                  name="expiryDate"
+                  component="div"
+                  className="text-red-500 text-sm mt-1"
+                />
+              </div>
+
+              {result && (
+                <div className="mt-4 p-4 bg-green-50 rounded-md">
+                  <p className="text-green-700 font-medium">
+                    URL Shortened Successfully!
+                  </p>
+                  <a
+                    href={result.shortUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline break-all"
+                  >
+                    {result.shortUrl}
+                  </a>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full mt-4"
+                disabled={loading || !isValid || !dirty}
+              >
+                {loading ? "Shortening..." : "Shorten It!"}
+              </Button>
+            </Form>
+          )}
+        </Formik>
       </div>
     </div>
   );
