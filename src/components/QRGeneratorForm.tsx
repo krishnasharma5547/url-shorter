@@ -12,10 +12,6 @@ interface QRGeneratorFormProps {
     logo?: File;
   }) => void;
   loading?: boolean;
-  result?: {
-    success: boolean;
-    qrCodeUrl: string;
-  } | null;
 }
 
 const validationSchema = Yup.object({
@@ -44,7 +40,6 @@ const validationSchema = Yup.object({
 const QRGeneratorForm: React.FC<QRGeneratorFormProps> = ({
   onSubmit,
   loading,
-  result,
 }) => {
   return (
     <div className="max-w-3xl mx-auto">
@@ -150,7 +145,9 @@ const QRGeneratorForm: React.FC<QRGeneratorFormProps> = ({
                 />
                 <div className="text-center text-sm text-gray-600">
                   <Field name="size">
-                    {({ field }: any) => field.value + "px"}
+                    {({ field }: { field: { value: string } }) =>
+                      field.value + "px"
+                    }
                   </Field>
                 </div>
                 <ErrorMessage
@@ -183,16 +180,6 @@ const QRGeneratorForm: React.FC<QRGeneratorFormProps> = ({
                   className="text-red-500 text-sm mt-1"
                 />
               </div>
-
-              {result && (
-                <div className="mt-4 flex justify-center">
-                  <img
-                    src={result.qrCodeUrl}
-                    alt="Generated QR Code"
-                    className="w-48 h-48 border rounded-lg shadow-sm"
-                  />
-                </div>
-              )}
 
               <Button
                 type="submit"

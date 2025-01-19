@@ -5,6 +5,8 @@ import QRGeneratorForm from "../components/QRGeneratorForm";
 import api from "../services/api";
 import LinkIcon from "../assets/LinkIcon";
 import QRIcon from "../assets/QRIcon";
+import Modal from "../components/Modal";
+import Toast from "../components/Toast";
 
 interface ShortenedURL {
   shortUrl: string;
@@ -12,19 +14,24 @@ interface ShortenedURL {
   expireAt: string;
 }
 
-interface QRCodeResult {
+interface QRCodeResponse {
   success: boolean;
-  qrCodeUrl: string;
+  data: string; // This is a base64 image string
 }
 
 const Home: React.FC = () => {
   const [shortenedURL, setShortenedURL] = useState<ShortenedURL | null>(null);
-  const [qrCode, setQRCode] = useState<QRCodeResult | null>(null);
+  const [qrCode, setQRCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState({
     shortening: false,
     generating: false,
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -50,10 +57,17 @@ const Home: React.FC = () => {
           : undefined,
       });
 
-      setShortenedURL(response);
+      setShortenedURL(response.data);
+      setToast({
+        message: "URL shortened successfully!",
+        type: "success",
+      });
+      setIsModalOpen(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to shorten URL");
-      setShortenedURL(null);
+      setToast({
+        message: err instanceof Error ? err.message : "Failed to shorten URL",
+        type: "error",
+      });
     } finally {
       setLoading((prev) => ({ ...prev, shortening: false }));
     }
@@ -80,14 +94,21 @@ const Home: React.FC = () => {
         logoPadding: 0,
         logoBackGroundShape: "rounded_square",
         logoBackGroundColour: "#FFFFFF",
-        logoUrl: null, // Handle logo upload if needed
+        logoUrl: null,
       });
 
-      setQRCode(response);
+      setQRCode(response.data);
+      setToast({
+        message: "QR code generated successfully!",
+        type: "success",
+      });
+      setIsModalOpen(true);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to generate QR code"
-      );
+      setToast({
+        message:
+          err instanceof Error ? err.message : "Failed to generate QR code",
+        type: "error",
+      });
       setQRCode(null);
     } finally {
       setLoading((prev) => ({ ...prev, generating: false }));
@@ -97,6 +118,22 @@ const Home: React.FC = () => {
   const calculateDays = (expiryDate: string): number => {
     const diff = new Date(expiryDate).getTime() - new Date().getTime();
     return Math.ceil(diff / (1000 * 3600 * 24));
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setToast({
+        message: "URL copied to clipboard!",
+        type: "success",
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e: unknown) {
+      setToast({
+        message: "Failed to copy URL",
+        type: "error",
+      });
+    }
   };
 
   return (
@@ -152,7 +189,6 @@ const Home: React.FC = () => {
           <URLShortenerForm
             onSubmit={handleURLShorten}
             loading={loading.shortening}
-            result={shortenedURL}
           />
         </div>
       </div>
@@ -163,10 +199,75 @@ const Home: React.FC = () => {
           <QRGeneratorForm
             onSubmit={handleQRGenerate}
             loading={loading.generating}
-            result={qrCode}
           />
         </div>
       </div>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
+
+      {shortenedURL && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title="URL Shortened Successfully!"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+              <span className="text-gray-600 break-all mr-2">
+                {shortenedURL.shortUrl}
+              </span>
+              <Button
+                variant="secondary"
+                onClick={() => copyToClipboard(shortenedURL.shortUrl)}
+                className="shrink-0"
+              >
+                Copy
+              </Button>
+            </div>
+            {shortenedURL.expireAt && (
+              <div className="text-sm text-gray-500">
+                Expires: {new Date(shortenedURL.expireAt).toLocaleDateString()}
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {qrCode && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title="QR Code Generated Successfully!"
+        >
+          <div className="space-y-4">
+            <div className="flex justify-center">
+              <img
+                src={`data:image/png;base64,${qrCode}`}
+                alt="Generated QR Code"
+                className="w-64 h-64 border rounded-lg shadow-sm"
+              />
+            </div>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                const link = document.createElement("a");
+                link.href = `data:image/png;base64,${qrCode}`;
+                link.download = "qr-code.png";
+                link.click();
+              }}
+              className="w-full"
+            >
+              Download QR Code
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

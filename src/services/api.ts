@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 
 const BASE_URL = "http://localhost:8090";
 
@@ -27,11 +27,6 @@ interface ShortenURLResponse {
   expireAt: string;
 }
 
-interface QRCodeResponse {
-  success: boolean;
-  qrCodeUrl: string;
-}
-
 const handleApiError = (error: unknown) => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<{ message: string }>;
@@ -45,7 +40,9 @@ const handleApiError = (error: unknown) => {
 };
 
 const api = {
-  shortenURL: async (data: ShortenURLRequest): Promise<ShortenURLResponse> => {
+  shortenURL: async (
+    data: ShortenURLRequest
+  ): Promise<AxiosResponse<ShortenURLResponse>> => {
     try {
       const response = await axios.post(`${BASE_URL}/url/shorten`, data);
       return response.data;
@@ -54,9 +51,9 @@ const api = {
     }
   },
 
-  generateQRCode: async (data: QRCodeRequest): Promise<QRCodeResponse> => {
+  generateQRCode: async (data: QRCodeRequest) => {
     try {
-      const response = await axios.post(`${BASE_URL}/dynamic/qr`, data);
+      const response = await axios.post(`${BASE_URL}/qr`, data);
       return response.data;
     } catch (error) {
       throw handleApiError(error);

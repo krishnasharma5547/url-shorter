@@ -10,11 +10,6 @@ interface URLShortenerFormProps {
     expiryDate?: string;
   }) => void;
   loading?: boolean;
-  result?: {
-    shortUrl: string;
-    originalUrl: string;
-    expireAt: string;
-  } | null;
 }
 
 const validationSchema = Yup.object({
@@ -34,7 +29,6 @@ const validationSchema = Yup.object({
 const URLShortenerForm: React.FC<URLShortenerFormProps> = ({
   onSubmit,
   loading,
-  result,
 }) => {
   return (
     <div className="max-w-3xl mx-auto">
@@ -131,22 +125,6 @@ const URLShortenerForm: React.FC<URLShortenerFormProps> = ({
                   className="text-red-500 text-sm mt-1"
                 />
               </div>
-
-              {result && (
-                <div className="mt-4 p-4 bg-green-50 rounded-md">
-                  <p className="text-green-700 font-medium">
-                    URL Shortened Successfully!
-                  </p>
-                  <a
-                    href={result.shortUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline break-all"
-                  >
-                    {result.shortUrl}
-                  </a>
-                </div>
-              )}
 
               <Button
                 type="submit"
